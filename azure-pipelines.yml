@@ -1,21 +1,39 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+# azure-pipelines.yml
 
 trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
 
 steps:
+
+# 1. Installer Node.js
 - task: NodeTool@0
   inputs:
     versionSpec: '20.x'
   displayName: 'Install Node.js'
 
+# 2. Installer les dépendances
 - script: |
     npm install
-    npm run build
-  displayName: 'npm install and build'
+  displayName: 'Install dependencies'
+
+# 3. Lancer les tests Playwright
+- script: |
+    npx playwright install
+    npx playwright test
+  displayName: 'Run Playwright tests'
+
+# 4. Générer le rapport Allure (si tu utilises allure-playwright)
+- script: |
+    npx allure generate ./allure-results --clean -o ./allure-report
+  displayName: 'Generate Allure Report'
+
+# 5. Publier le rapport Allure
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: 'allure-report'
+    artifactName: 'AllureReport'
+    publishLocation: 'Container'
+  displayName: 'Publish Allure Report'
