@@ -1,39 +1,23 @@
-# azure-pipelines.yml
-
 trigger:
-- main
+  - main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: 'Install Node.js'
 
-# 1. Installer Node.js
-- task: NodeTool@0
-  inputs:
-    versionSpec: '20.x'
-  displayName: 'Install Node.js'
+  - script: |
+      npm ci
+      npx playwright install --with-deps
+      npx playwright test
+    displayName: 'Install dependencies and run tests'
 
-# 2. Installer les dépendances
-- script: |
-    npm install
-  displayName: 'Install dependencies'
-
-# 3. Lancer les tests Playwright
-- script: |
-    npx playwright install
-    npx playwright test
-  displayName: 'Run Playwright tests'
-
-# 4. Générer le rapport Allure (si tu utilises allure-playwright)
-- script: |
-    npx allure generate ./allure-results --clean -o ./allure-report
-  displayName: 'Generate Allure Report'
-
-# 5. Publier le rapport Allure
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: 'allure-report'
-    artifactName: 'AllureReport'
-    publishLocation: 'Container'
-  displayName: 'Publish Allure Report'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: 'playwright-report'
+      artifact: 'playwright-html-report'
+      publishLocation: 'pipeline'
